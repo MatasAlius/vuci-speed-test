@@ -73,10 +73,10 @@ function M.readFile(params)
 	local count = 1
 	local lines = {}
 	for line in io.lines("/tmp/serverlist.txt") do
-			if count >= params.from and count <= params.to then
-				lines[#lines+1] = line
-			end
-			count = count+1
+		if count >= params.from and count <= params.to then
+			lines[#lines+1] = line
+		end
+		count = count+1
 	end
 	return lines
 end

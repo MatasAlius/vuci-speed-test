@@ -67,10 +67,8 @@
       </a-table>
     </a-modal>
 
-    {{ serverUserCountry }} {{ serverUserCountry.length }}
-
+    <!-- {{ serverUserCountry }} {{ serverUserCountry.length }} -->
     <a-divider />
-
     <!-- {{ serverList }} -->
   </div>
 </template>
@@ -149,8 +147,6 @@ export default {
       this.serverListModal = !this.serverListModal
     },
     selectServer (index, name) {
-      console.log(index, name)
-      console.log(this.serverList[index].url)
       this.serverListModal = false
       this.selectedServer.name = this.serverList[index].name + ' ' + this.serverList[index].sponsor
       this.selectedServer.id = index
@@ -163,12 +159,10 @@ export default {
         this.user_city = results.city
         this.user_isp = results.isp
         this.user_code = results.country_code
-        console.log(this.user_city.normalize())
       })
     },
     getServerList () {
       this.$rpc.call('speedtest', 'getServerList', { }).then(data => {
-        console.log(data)
         this.getReadFile()
       })
     },
@@ -177,7 +171,6 @@ export default {
       this.$rpc.call('speedtest', 'readFile', { from: 1, to: 6938 }).then(data => {
         if (data) {
           var parser = new DOMParser()
-          console.log(data.length)
           var count = 0
           for (var i = 0; i < data.length; i++) {
             var xmlDoc = parser.parseFromString(data[i], 'text/xml')
@@ -185,13 +178,11 @@ export default {
             if (xmlServer[0]) {
               this.serverList.push({ key: count, name: xmlServer[0].getAttribute('name'), url: xmlServer[0].getAttribute('url'), country: xmlServer[0].getAttribute('country'), sponsor: xmlServer[0].getAttribute('sponsor'), host: xmlServer[0].getAttribute('host') })
               if (this.user_code === xmlServer[0].getAttribute('cc')) {
-                console.log(xmlServer[0].getAttribute('name'))
                 this.serverUserCountry.push(count)
                 this.speedTestCurl(xmlServer[0].getAttribute('url'))
               }
               count++
             }
-            // console.log(i)
           }
         }
       })
