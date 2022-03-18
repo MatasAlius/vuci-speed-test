@@ -36,6 +36,7 @@ function M.fileExists(path)
 end
 
 function M.getServerList(params)
+
 	local exists = M.fileExists('/tmp/serverlist.txt')
 
 	if exists == 0 then
@@ -70,19 +71,23 @@ function M.getServerList(params)
 end
 
 function M.readFile(params)
+  local arr = {}
+
 	local count = 1
+
 	local lines = {}
 	for line in io.lines("/tmp/serverlist.txt") do
-		if count >= params.from and count <= params.to then
-			lines[#lines+1] = line
-		end
-		count = count+1
+			if count >= params.from and count <= params.to then
+				lines[#lines+1] = line
+			end
+			count = count+1
 	end
 	return lines
 end
 
 function M.readAllFile(params)
-	local arr = {}
+  local arr = {}
+
 	local path = "/tmp/serverlist.txt"
 
 	local f = io.open(path, "r")
@@ -108,24 +113,28 @@ function M.pingIp(params)
 end
 
 function M.speedTestCurl(params)
-	os.execute('head -c 1024 /dev/urandom > temp.txt')
+	os.execute('head -c '..params.size..' /dev/urandom > /tmp/temp.txt')
 	local post = cURL.form()
-		:add_file  ("name", "temp.txt", "text/plain")
+		:add_file  ("name", "/tmp/temp.txt", "text/plain")
 
 	local c = cURL.easy()
 		:setopt_url(params.url)
 		:setopt_httppost(post)
-		:setopt_timeout(2)
-		:setopt_connecttimeout(1)
+		:setopt_timeout(4)
+		:setopt_connecttimeout(2)
+		:setopt_accepttimeout_ms(2)
 	
 	local ok, err = pcall(function() c:perform() end)
 	params.ok = ok
 	params.err = err
-	params.response = c:getinfo_response_code()
 	if ok then
+		params.response = c:getinfo_response_code()
 		if params.response == 200 then
 			params.connect = c:getinfo_connect_time()
 			params.total = c:getinfo_total_time()
+			params.upload = c:getinfo_speed_upload()
+		else
+			params.ok = false
 		end
 	end
 	c:close()
