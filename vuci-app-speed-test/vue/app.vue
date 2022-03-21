@@ -143,6 +143,8 @@ export default {
         this.connection.description = 'Connecting'
         this.upload.icon = 'upload'
         this.upload.description = ''
+        // 1048576 - 1MB
+        // 10485760 - 10MB
         this.$rpc.call('speedtest', 'speedTestCurl', { url: this.serverList[this.selectedServer.id].url, size: 5048576 }).then(r => {
           console.log(r)
           if (r.ok) {
