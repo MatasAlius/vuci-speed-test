@@ -119,7 +119,7 @@ function M.speedTestCurl(params)
 	local c = cURL.easy()
 		:setopt_url(params.url)
 		:setopt_httppost(post)
-		:setopt_timeout(4)
+		:setopt_timeout(5)
 		:setopt_connecttimeout(2)
 		:setopt_accepttimeout_ms(2)
 	
@@ -142,14 +142,47 @@ end
 
 function M.speedTestUpload(params)
 	os.execute('rm /tmp/speedtest_up.txt &')
-	os.execute('lua /tmp/upload.lua '..params.size..' '..params.url..' &')
+	os.execute('lua /usr/lib/lua/upload.lua '..params.size..' '..params.url..' &')
 	return params
 end
 
 function M.speedTestDownload(params)
 	os.execute('rm /tmp/speedtest_down.txt &')
-	os.execute('lua /tmp/download.lua '..params.url..' &')
+	os.execute('lua /usr/lib/lua/download.lua '..params.url..' &')
 	return params
+end
+
+function M.removeFile(params)
+	os.execute('rm '..params.path..'')
+	return params
+end	
+
+function M.speedTest(params)
+	os.execute('rm /tmp/speedtest_connect_'..params.id..'.txt')
+	os.execute('lua /usr/lib/lua/connect.lua '..params.size..' '..params.url..' '..params.id..' &')
+	return params
+end
+
+function M.readTestFile(params)
+	os.execute('sleep 1')
+  local arr = {}
+
+	local path = params.path
+
+	local f = io.open(path, "r")
+	if f~=nil then
+		io.close(f)
+		local handle  = assert( io.open(path,"r") )
+		local value = handle:read("*line")
+		while value do
+			table.insert( arr, value )
+			value = handle:read("*line")
+		end
+		handle:close()
+		return arr
+	else
+		return arr
+	end
 end
 
 return M
