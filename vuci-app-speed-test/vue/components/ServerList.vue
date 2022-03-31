@@ -24,17 +24,44 @@ const columns = [
     title: 'Name',
     dataIndex: 'name',
     key: 'name',
-    scopedSlots: { customRender: 'name' }
+    scopedSlots: { customRender: 'name' },
+    sorter: (a, b) => a.name > b.name ? 1 : -1
   },
   {
     title: 'Country',
     dataIndex: 'country',
-    key: 'country'
+    key: 'country',
+    sorter: (a, b) => a.country > b.country ? 1 : -1,
+    defaultSortOrder: 'ascend',
+    filters: [
+      {
+        text: 'Finland',
+        value: 'Finland'
+      },
+      {
+        text: 'Estonia',
+        value: 'Estonia'
+      },
+      {
+        text: 'Lithuania',
+        value: 'Lithuania'
+      },
+      {
+        text: 'Latvia',
+        value: 'Latvia'
+      },
+      {
+        text: 'Poland',
+        value: 'Poland'
+      }
+    ],
+    onFilter: (value, record) => record.country.includes(value)
   },
   {
     title: 'Sponsor',
     dataIndex: 'sponsor',
-    key: 'sponsor'
+    key: 'sponsor',
+    sorter: (a, b) => a.sponsor > b.sponsor ? 1 : -1
   },
   {
     scopedSlots: { customRender: 'button' }
@@ -53,7 +80,6 @@ export default {
   },
   methods: {
     selectServer (index, name) {
-      console.log('index: ' + index + ' , ' + name)
       this.$emit('selectServer', index)
     }
   }

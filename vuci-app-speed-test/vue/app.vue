@@ -64,7 +64,6 @@ export default {
   data () {
     return {
       currentStep: 0,
-      inputServer: 'best',
       gauge: {
         value: 0,
         title: '',
@@ -91,7 +90,7 @@ export default {
         title: 'Upload',
         icon: 'upload',
         description: '',
-        size: 40485760,
+        size: 41943040,
         count: 0
       },
       download: {
@@ -99,11 +98,6 @@ export default {
         icon: 'download',
         description: ''
       }
-    }
-  },
-  filters: {
-    toMB: function (value) {
-      return (value / 1000000).toFixed(2)
     }
   },
   timers: {
@@ -128,29 +122,35 @@ export default {
         this.gauge.max = 100
         this.disableStart = true
         this.$rpc.call('speedtest', 'speedTest', { url: this.serverList[this.selectedServer.id].url, size: 1024, id: this.selectedServer.id }).then(data => {
-          this.$rpc.call('speedtest', 'readTestFile', { path: '/tmp/speedtest_connect_' + this.selectedServer.id + '.txt' }).then(data => {
-            if (data[0]) {
-              const res = data[0].split(',')
-              if (res[1] === 'true') {
-                this.connection.description = 'Latency: ' + (res[3] * 1000).toFixed(2) + ' ms'
-                this.connection.icon = 'check'
-                this.currentStep = 1
-                this.downloadTest()
-              } else {
-                this.connection.description = 'Error'
-                this.connection.icon = 'disconnect'
-                this.disableStart = false
-              }
-            } else {
-              this.connection.description = 'Error'
-              this.connection.icon = 'disconnect'
-              this.disableStart = false
-            }
+          const delayPromise = new Promise((resolve, reject) => {
+            setTimeout(() => {
+              this.$rpc.call('speedtest', 'readAllFile', { path: '/tmp/speedtest_connect_' + this.selectedServer.id + '.txt' }).then(data => {
+                if (data[0]) {
+                  const res = data[0].split(',')
+                  if (res[1] === 'true') {
+                    this.connection.description = 'Latency: ' + (res[3] * 1000).toFixed(0) + ' ms'
+                    this.connection.icon = 'check'
+                    this.currentStep = 1
+                    this.downloadTest()
+                  } else {
+                    this.connection.description = 'Error'
+                    this.connection.icon = 'disconnect'
+                    this.disableStart = false
+                  }
+                } else {
+                  this.connection.description = 'Error'
+                  this.connection.icon = 'disconnect'
+                  this.disableStart = false
+                }
+              })
+            }, 2000)
           })
+          delayPromise.then()
         })
       }
     },
     uploadTest () {
+      this.upload.count = 0
       this.$rpc.call('speedtest', 'speedTestUpload', { url: this.serverList[this.selectedServer.id].url, size: this.upload.size }).then(r => {
         this.upload.icon = 'loading'
         this.$timer.start('uploadReadFile')
@@ -167,6 +167,7 @@ export default {
               if (this.upload.count >= 3) {
                 this.upload.icon = 'disconnect'
                 this.upload.description = 'Error'
+                this.disableStart = false
               } else {
                 this.upload.count = this.upload.count + 1
                 this.$rpc.call('speedtest', 'speedTestUpload', { url: this.serverList[this.selectedServer.id].url, size: this.upload.size / 10 }).then(r => {
@@ -254,28 +255,33 @@ export default {
               if (!sessionStorage.getItem('server')) {
                 if (this.user_code === xmlServer[0].getAttribute('cc')) {
                   this.$rpc.call('speedtest', 'speedTest', { url: xmlServer[0].getAttribute('url'), size: 1024, id: count }).then(data => {
-                    this.$rpc.call('speedtest', 'readAllFile', { path: '/tmp/speedtest_connect_' + data.id + '.txt' }).then(data => {
-                      if (data[0]) {
-                        const res = data[0].split(',')
-                        if (res[1] === 'true') {
-                          this.serverUserCountry.push({ key: res[0], total: res[4] })
-                          if (this.selectedServer.id > -1) {
-                            if (this.selectedServer.total > res[4]) {
-                              this.selectedServer.id = res[0]
-                              this.selectedServer.name = 'Best server (' + this.serverList[res[0]].name + ')'
-                              this.selectedServer.total = res[4]
-                              sessionStorage.setItem('server', res[0])
+                    const delayPromise = new Promise((resolve, reject) => {
+                      setTimeout(() => {
+                        this.$rpc.call('speedtest', 'readAllFile', { path: '/tmp/speedtest_connect_' + data.id + '.txt' }).then(data => {
+                          if (data[0]) {
+                            const res = data[0].split(',')
+                            if (res[1] === 'true') {
+                              this.serverUserCountry.push({ key: res[0], total: res[4] })
+                              if (this.selectedServer.id > -1) {
+                                if (this.selectedServer.total > res[4]) {
+                                  this.selectedServer.id = res[0]
+                                  this.selectedServer.name = 'Best server (' + this.serverList[res[0]].name + ')'
+                                  this.selectedServer.total = res[4]
+                                  sessionStorage.setItem('server', res[0])
+                                }
+                              } else {
+                                this.selectedServer.id = res[0]
+                                this.selectedServer.name = 'Best server (' + this.serverList[res[0]].name + ')'
+                                this.selectedServer.total = res[4]
+                                sessionStorage.setItem('server', res[0])
+                              }
+                              this.selectedServer.icon = 'dashboard'
                             }
-                          } else {
-                            this.selectedServer.id = res[0]
-                            this.selectedServer.name = 'Best server (' + this.serverList[res[0]].name + ')'
-                            this.selectedServer.total = res[4]
-                            sessionStorage.setItem('server', res[0])
                           }
-                          this.selectedServer.icon = 'dashboard'
-                        }
-                      }
+                        })
+                      }, 2000)
                     })
+                    delayPromise.then()
                   })
                 }
               } else if (+count === +sessionStorage.getItem('server')) {
